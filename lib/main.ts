@@ -1,11 +1,26 @@
 import wallPic from '../textures/brickwork.jpeg';
 
-const audios = {
-  'Do': () => new Audio('./audio/40.mp3').play(),
-  'Ri': () => new Audio('./audio/42.mp3').play(),
-  'Mi': () => new Audio('./audio/44.mp3').play(),
-  'Fa': () => new Audio('./audio/45.mp3').play(),
-};
+async function createAudioPlayer(name: string) {
+  const arrayBuffer = await import(`../audio/${name}`);
+  const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
+  const objectUrl = URL.createObjectURL(blob);
+  return (volume?: number) => {
+    const audio = new Audio(objectUrl);
+    if (volume) {
+      audio.volume = volume;
+    }
+    audio.play();
+  };
+}
+
+const audios = {} as Record<string, (volume?: number) => void>;
+(async function() {
+  audios['Do'] = await createAudioPlayer('40.mp3');
+  audios['Ri'] = await createAudioPlayer('42.mp3');
+  audios['Mi'] = await createAudioPlayer('44.mp3');
+  audios['Fa'] = await createAudioPlayer('45.mp3');
+})();
+// createAudioPlayer('tonbi.wav').then(play => play(0.9));
 
 const wall = spatialDocument.getSpatialObjectById('box1');
 createImageBitmap(new Blob([wallPic], { type: 'image/jpeg' })).then((bitmap) => {
@@ -50,7 +65,7 @@ for (let sub of subChildren) {
 
   /** Listen events */
   subElement.addEventListener('mouseenter', () => {
-    subElement.style.backgroundColor = 'rgba(100,0,200,.95)';
+    subElement.style.backgroundColor = 'rgba(100,0,120,.95)';
   });
   subElement.addEventListener('mouseleave', () => {
     subElement.style.backgroundColor = 'rgba(60,33,33,.95)';
@@ -59,9 +74,8 @@ for (let sub of subChildren) {
     subElement.style.backgroundColor = 'rgba(30,33,33,.95)';
     const playAudio = audios[subElement.textContent];
     if (playAudio) {
-      playAudio();
+      playAudio(1.0);
     }
   });
 }
 spatialDocument.watchInputEvent();
-
